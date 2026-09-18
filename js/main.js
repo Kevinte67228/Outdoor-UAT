@@ -373,7 +373,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (titleEl) titleEl.innerHTML = isAdmin ? '⚙️ 管理者設定：各月份收益、承租人與預訂排程' : '📅 2026 年度版位預訂與排程明細';
     if (storeInfoEl) storeInfoEl.textContent = `🏪 ${storeCode} ${storeName} · 版位 [${loc}] · ${adType}`;
-    if (rentInfoEl) rentInfoEl.textContent = `基準月租金：${baseRental}`;
+    if (rentInfoEl) {
+      rentInfoEl.style.display = isAdmin ? 'inline-block' : 'none';
+      if (isAdmin) rentInfoEl.textContent = `基準月租金：${baseRental}`;
+    }
 
     if (hintEl) {
       if (isAdmin) {
@@ -416,10 +419,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const isBooked = Number(rev) > 0 || Boolean(tenant);
 
       const card = document.createElement('div');
-      card.className = `month-card ${isBooked ? 'is-booked' : 'is-available'} ${String(m) === String(activeM) ? 'month-highlight-2' : ''}`;
       card.setAttribute('data-card-m', m);
 
       if (isAdmin) {
+        card.className = `month-card ${isBooked ? 'is-booked' : 'is-available'} ${String(m) === String(activeM) ? 'month-highlight-2' : ''}`;
         card.innerHTML = `
           <div class="month-card-header">
             <span class="month-card-title">${m} 月</span>
@@ -479,15 +482,12 @@ document.addEventListener('DOMContentLoaded', () => {
           updateCardStatus();
         });
       } else {
+        // Visitor View: Clean card only displaying month & open/booked badge
+        card.className = `month-card visitor-month-card ${isBooked ? 'is-booked' : 'is-available'} ${String(m) === String(activeM) ? 'month-highlight-2' : ''}`;
         card.innerHTML = `
           <div class="month-card-header">
             <span class="month-card-title">${m} 月</span>
             <span class="month-badge-pill ${isBooked ? 'pill-booked' : 'pill-avail'}">${isBooked ? '🔒 不開放預訂' : '🟢 開放預訂'}</span>
-          </div>
-          <div class="month-card-body">
-            <div class="user-status-text ${isBooked ? 'text-booked' : 'text-avail'}">
-              ${isBooked ? '⚠️ 本月檔期已有預訂，不對外開放' : '✅ 本月檔期正常開放預訂中'}
-            </div>
           </div>
         `;
       }
