@@ -532,6 +532,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     modal.style.display = 'flex';
+    const modalBody = modal.querySelector('.modal-body');
+    if (modalBody) modalBody.scrollTop = 0;
   };
   window.openScheduleModal = window.openMonthScheduleModal;
 
@@ -570,16 +572,69 @@ document.addEventListener('DOMContentLoaded', () => {
   // Batch panel event bindings (One-time binding)
   const batchPanelInit = document.getElementById('schedule-batch-panel');
   if (batchPanelInit) {
+    function applyBatchToRange(minM, maxM, isPreset = false) {
+      const statusSelect = document.getElementById('batch-status-select');
+      const isTargetBooked = statusSelect ? (statusSelect.value !== 'avail') : true;
+
+      const batchTenant = (document.getElementById('batch-tenant-input') ? document.getElementById('batch-tenant-input').value.trim() : '');
+      const batchRevRaw = (document.getElementById('batch-rev-input') ? document.getElementById('batch-rev-input').value : '');
+      const batchRev = parseInt(batchRevRaw.replace(/[^0-9]/g, ''), 10) || 0;
+
+      for (let m = minM; m <= maxM; m++) {
+        const card = document.querySelector(`.month-card[data-card-m="${m}"]`);
+        if (card) {
+          const revInput = card.querySelector('.month-rev-input');
+          const tenantInput = card.querySelector('.month-tenant-input');
+          const pill = card.querySelector('.month-badge-pill');
+          const btnAvail = card.querySelector('.btn-status-avail');
+          const btnBooked = card.querySelector('.btn-status-booked');
+
+          if (isTargetBooked) {
+            if (revInput) revInput.value = batchRev > 0 ? batchRev : (revInput.value || '');
+            if (tenantInput) tenantInput.value = batchTenant || tenantInput.value;
+            if (pill) {
+              pill.className = 'month-badge-pill pill-booked';
+              pill.textContent = '🔒 不開放預訂';
+            }
+            card.classList.remove('is-available');
+            card.classList.add('is-booked');
+            if (btnAvail) btnAvail.classList.remove('active-avail');
+            if (btnBooked) btnBooked.classList.add('active-booked');
+          } else {
+            if (revInput) revInput.value = '';
+            if (tenantInput) tenantInput.value = '';
+            if (pill) {
+              pill.className = 'month-badge-pill pill-avail';
+              pill.textContent = '🟢 開放預訂';
+            }
+            card.classList.remove('is-booked');
+            card.classList.add('is-available');
+            if (btnBooked) btnBooked.classList.remove('active-booked');
+            if (btnAvail) btnAvail.classList.add('active-avail');
+          }
+        }
+      }
+
+      const count = maxM - minM + 1;
+      const statusText = isTargetBooked ? '不開放預訂 (已承租)' : '開放預訂';
+      if (window.showToast) {
+        window.showToast(`⚡ 已成功套用至 ${minM}~${maxM} 月 (共 ${count} 個月份) 為「${statusText}」！請確認後點擊下方「💾 儲存預訂與收益設定」`, 'info');
+      }
+    }
+
     batchPanelInit.querySelectorAll('.batch-preset-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         batchPanelInit.querySelectorAll('.batch-preset-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        const startM = btn.getAttribute('data-start');
-        const endM = btn.getAttribute('data-end');
+        const startM = parseInt(btn.getAttribute('data-start') || '1', 10);
+        const endM = parseInt(btn.getAttribute('data-end') || '12', 10);
         const startSelect = document.getElementById('batch-start-month');
         const endSelect = document.getElementById('batch-end-month');
         if (startSelect) startSelect.value = startM;
         if (endSelect) endSelect.value = endM;
+
+        // Immediate apply when preset shortcut is clicked!
+        applyBatchToRange(startM, endM, true);
       });
     });
 
@@ -592,54 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const endM = parseInt(endSelect ? endSelect.value : '12', 10);
         const minM = Math.min(startM, endM);
         const maxM = Math.max(startM, endM);
-
-        const statusSelect = document.getElementById('batch-status-select');
-        const isTargetBooked = statusSelect ? (statusSelect.value !== 'avail') : true;
-
-        const batchTenant = (document.getElementById('batch-tenant-input') ? document.getElementById('batch-tenant-input').value.trim() : '');
-        const batchRevRaw = (document.getElementById('batch-rev-input') ? document.getElementById('batch-rev-input').value : '');
-        const batchRev = parseInt(batchRevRaw.replace(/[^0-9]/g, ''), 10) || 0;
-
-        for (let m = minM; m <= maxM; m++) {
-          const card = document.querySelector(`.month-card[data-card-m="${m}"]`);
-          if (card) {
-            const revInput = card.querySelector('.month-rev-input');
-            const tenantInput = card.querySelector('.month-tenant-input');
-            const pill = card.querySelector('.month-badge-pill');
-            const btnAvail = card.querySelector('.btn-status-avail');
-            const btnBooked = card.querySelector('.btn-status-booked');
-
-            if (isTargetBooked) {
-              if (revInput) revInput.value = batchRev > 0 ? batchRev : (revInput.value || '');
-              if (tenantInput) tenantInput.value = batchTenant || tenantInput.value;
-              if (pill) {
-                pill.className = 'month-badge-pill pill-booked';
-                pill.textContent = '🔒 不開放預訂';
-              }
-              card.classList.remove('is-available');
-              card.classList.add('is-booked');
-              if (btnAvail) btnAvail.classList.remove('active-avail');
-              if (btnBooked) btnBooked.classList.add('active-booked');
-            } else {
-              if (revInput) revInput.value = '';
-              if (tenantInput) tenantInput.value = '';
-              if (pill) {
-                pill.className = 'month-badge-pill pill-avail';
-                pill.textContent = '🟢 開放預訂';
-              }
-              card.classList.remove('is-booked');
-              card.classList.add('is-available');
-              if (btnBooked) btnBooked.classList.remove('active-booked');
-              if (btnAvail) btnAvail.classList.add('active-avail');
-            }
-          }
-        }
-
-        const count = maxM - minM + 1;
-        const statusText = isTargetBooked ? '不開放預訂 (已承租)' : '開放預訂';
-        if (window.showToast) {
-          window.showToast(`⚡ 已成功批次設定 ${minM}~${maxM} 月 (共 ${count} 個月份) 為「${statusText}」！請點擊「💾 儲存預訂與收益設定」`, 'info');
-        }
+        applyBatchToRange(minM, maxM, false);
       });
     }
 
