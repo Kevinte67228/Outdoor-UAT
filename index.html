@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>[UAT 測試環境] 門市戶外廣告看板明細</title>
-  <link rel="stylesheet" href="css/style.css?v=1789727321180">
+  <link rel="stylesheet" href="css/style.css?v=1789738963807">
 </head>
 <body>
 
@@ -25478,6 +25478,73 @@
           ℹ️ 2026 年度各月份檔期開放狀況表。標示「不開放預訂」之月份代表已有檔期安排，歡迎預訂其他開放月份。
         </div>
 
+        <!-- 快速批量承租設定工具 (僅管理者可見) -->
+        <div id="schedule-batch-panel" class="schedule-batch-panel" style="display: none;">
+          <div class="batch-panel-header">
+            <div class="batch-panel-title">⚡ 快速連續月份承租設定 (適用多月份 / 半年 / 全年合約)</div>
+            <div class="batch-panel-tip">💡 適合一次設定半年(6個月)、全年或指定季度的合約客戶</div>
+          </div>
+          <div class="batch-controls-grid">
+            <div class="batch-field-group">
+              <label for="batch-tenant-input">承租廠商 / 客戶備註 (僅管理者可見)：</label>
+              <input type="text" id="batch-tenant-input" placeholder="例如：國泰世華銀行、麥當勞、信義房屋...">
+            </div>
+            <div class="batch-field-group">
+              <label for="batch-rev-input">每月收益金額 (NT$)：</label>
+              <input type="number" id="batch-rev-input" placeholder="0 (自動帶入基準租金)" min="0" step="1000">
+            </div>
+          </div>
+          <div class="batch-presets-row">
+            <span class="batch-presets-label">快速快捷鍵：</span>
+            <button type="button" class="batch-preset-btn" data-start="1" data-end="6">上半年 (1~6月)</button>
+            <button type="button" class="batch-preset-btn" data-start="7" data-end="12">下半年 (7~12月)</button>
+            <button type="button" class="batch-preset-btn" data-start="1" data-end="12">全年 (1~12月)</button>
+            <button type="button" class="batch-preset-btn" data-start="1" data-end="3">第一季 (Q1)</button>
+            <button type="button" class="batch-preset-btn" data-start="4" data-end="6">第二季 (Q2)</button>
+            <button type="button" class="batch-preset-btn" data-start="7" data-end="9">第三季 (Q3)</button>
+            <button type="button" class="batch-preset-btn" data-start="10" data-end="12">第四季 (Q4)</button>
+          </div>
+          <div class="batch-actions-row">
+            <div class="batch-range-custom">
+              <span>或自訂區間：</span>
+              從 
+              <select id="batch-start-month" class="batch-range-select">
+                <option value="1">1月</option>
+                <option value="2">2月</option>
+                <option value="3">3月</option>
+                <option value="4">4月</option>
+                <option value="5">5月</option>
+                <option value="6">6月</option>
+                <option value="7">7月</option>
+                <option value="8">8月</option>
+                <option value="9">9月</option>
+                <option value="10">10月</option>
+                <option value="11">11月</option>
+                <option value="12">12月</option>
+              </select>
+              到
+              <select id="batch-end-month" class="batch-range-select">
+                <option value="1">1月</option>
+                <option value="2">2月</option>
+                <option value="3">3月</option>
+                <option value="4">4月</option>
+                <option value="5">5月</option>
+                <option value="6" selected>6月</option>
+                <option value="7">7月</option>
+                <option value="8">8月</option>
+                <option value="9">9月</option>
+                <option value="10">10月</option>
+                <option value="11">11月</option>
+                <option value="12">12月</option>
+              </select>
+            </div>
+            <div class="batch-buttons-group">
+              <button type="button" id="btn-batch-apply" class="btn-batch-apply">⚡ 一鍵套用至所選月份</button>
+              <button type="button" id="btn-batch-clear" class="btn-batch-clear">🔄 清空所選月份(恢復開放)</button>
+            </div>
+          </div>
+        </div>
+
         <div class="schedule-months-grid" id="schedule-months-grid">
           <!-- Generated dynamically by JS -->
         </div>
@@ -25534,7 +25601,7 @@
   <div id="toast-container" class="toast-container"></div>
 
   <!-- Scripts -->
-  <script src="js/main.js?v=1789727321180"></script>
-  <script src="js/admin.js?v=1789727321180"></script>
+  <script src="js/main.js?v=1789738963807"></script>
+  <script src="js/admin.js?v=1789738963807"></script>
 </body>
 </html>
