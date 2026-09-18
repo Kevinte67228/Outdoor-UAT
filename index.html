@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>[UAT 測試環境] 門市戶外廣告看板明細</title>
-  <link rel="stylesheet" href="css/style.css?v=1789746010788">
+  <link rel="stylesheet" href="css/style.css?v=1789746924964">
 </head>
 <body>
 
@@ -24234,9 +24237,14 @@
   <div id="schedule-modal" class="modal-overlay" style="display: none;" onclick="if(event.target===this)window.closeMonthScheduleModal()">
     <div class="modal-card schedule-modal-card">
       <div class="modal-header">
-        <h3 id="schedule-modal-title">📅 2026 年度各月份開放預訂排程</h3>
-        <button type="button" id="btn-modal-switch-admin" class="btn-modal-switch-admin" onclick="window.promptAdminLoginFromModal()" title="切換至管理者模式">🔐 管理者登入</button>
-        <button type="button" class="modal-close" id="schedule-modal-close" onclick="window.closeMonthScheduleModal()">&times;</button>
+        <div class="modal-header-left" style="display:flex; align-items:center; gap:10px;">
+          <h3 id="schedule-modal-title" style="margin:0;">📅 2026 年度各月份開放預訂排程</h3>
+        </div>
+        <div class="modal-header-right" style="display:flex; align-items:center; gap:8px;">
+          <button type="button" id="schedule-modal-save-top" class="btn-header-save" style="display: none;" onclick="window.saveMonthScheduleModal()" title="立即儲存所有月份變更">💾 儲存設定</button>
+          <button type="button" id="btn-modal-switch-admin" class="btn-modal-switch-admin" onclick="window.promptAdminLoginFromModal()" title="切換至管理者模式">🔐 管理者登入</button>
+          <button type="button" class="modal-close" id="schedule-modal-close" onclick="window.closeMonthScheduleModal()">&times;</button>
+        </div>
       </div>
       <div class="modal-body">
         <div class="schedule-slot-info" id="schedule-slot-info">
@@ -24321,6 +24329,7 @@
             </div>
             <div class="batch-buttons-group">
               <button type="button" id="btn-batch-apply" class="btn-batch-apply">⚡ 一鍵套用至所選月份</button>
+              <button type="button" id="btn-batch-apply-and-save" class="btn-batch-apply-save" title="將設定套用至所選月份並立即儲存關閉">💾 一鍵套用並立即儲存</button>
               <button type="button" id="btn-batch-clear" class="btn-batch-clear">🔄 清空所選月份(恢復開放)</button>
             </div>
           </div>
@@ -24382,7 +24391,7 @@
   <div id="toast-container" class="toast-container"></div>
 
   <!-- Scripts -->
-  <script src="js/main.js?v=1789746010788"></script>
-  <script src="js/admin.js?v=1789746010788"></script>
+  <script src="js/main.js?v=1789746924964"></script>
+  <script src="js/admin.js?v=1789746924964"></script>
 </body>
 </html>
