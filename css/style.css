@@ -1436,6 +1436,7 @@ body.admin-mode .m-pill.m-pill-booked:hover {
 }
 
 .btn-schedule-action {
+  display: none !important;
   width: 100%;
   margin-top: 2px;
   padding: 4px 8px;
@@ -1458,6 +1459,7 @@ body.admin-mode .m-pill.m-pill-booked:hover {
 }
 
 body.admin-mode .btn-schedule-action {
+  display: block !important;
   background: #eff6ff;
   border-color: #93c5fd;
   color: #1d4ed8;
