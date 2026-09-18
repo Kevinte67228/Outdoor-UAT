@@ -577,9 +577,6 @@
       '<td class="rental editable-cell">—</td>' +
       '<td class="month-schedule-cell" data-schedule="{}" data-store="' + (firstRow.dataset.store || '') + '" data-loc="' + nextLoc + '">' +
         '<div class="schedule-cell-wrapper">' +
-          '<div class="schedule-summary-header">' +
-            '<div class="summary-avail-text">🟢 全年 1~12月 皆可預訂</div>' +
-          '</div>' +
           '<div class="schedule-year-grid">' +
             '<div class="year-grid-row">' +
               [1,2,3,4,5,6].map(m => '<span class="m-pill m-pill-avail" data-m="' + m + '" onclick="window.openMonthScheduleModal(this, ' + m + ')" title="' + m + '月：🟢 開放預訂">' + m + '月</span>').join('') +
@@ -587,7 +584,8 @@
             '<div class="year-grid-row">' +
               [7,8,9,10,11,12].map(m => '<span class="m-pill m-pill-avail" data-m="' + m + '" onclick="window.openMonthScheduleModal(this, ' + m + ')" title="' + m + '月：🟢 開放預訂">' + m + '月</span>').join('') +
             '</div>' +
-          '<button type="button" class="btn-schedule-action" style="display: ' + (isAdmin ? 'block' : 'none') + ';" onclick="window.openMonthScheduleModal(this)" title="管理各月份預訂排程">' + (isAdmin ? '⚙️ 設定各月收益與承租人' : '') + '</button>' +
+          '</div>' +
+          '<button type="button" class="btn-schedule-action" style="display: ' + (isAdmin ? 'block' : 'none') + ';" onclick="window.openMonthScheduleModal(this)" title="管理各月份預訂排程、收益與承租廠商">⚙️ 管理預訂/收益/廠商</button>' +
         '</div>' +
       '</td>' +
       '<td class="photo-cell" data-col="current" data-loc="' + nextLoc + '" data-store="' + (firstRow.dataset.store || '') + '" data-adtype="' + (firstRow.dataset.type || '') + '">' +
@@ -999,6 +997,9 @@
     showToast('已登出管理者模式', 'info');
   }
 
+  window.enableAdminMode = enableAdminMode;
+  window.disableAdminMode = disableAdminMode;
+
   // ===== Modals & Toolbar Buttons Setup =====
   function initModals() {
     const loginModal = document.getElementById('admin-modal');
@@ -1339,9 +1340,15 @@
         const bookedMonths = [];
         for (let m = 1; m <= 12; m++) {
           const mData = sched[String(m)];
-          const rev = mData ? (typeof mData === 'object' ? mData.revenue : mData) : 0;
-          const tenant = (mData && typeof mData === 'object' && mData.tenant) ? mData.tenant : '';
-          if (Number(rev) > 0 || Boolean(tenant)) bookedMonths.push(m);
+          let isBooked = false;
+          if (window.checkIsBooked) {
+            isBooked = window.checkIsBooked(mData);
+          } else if (mData) {
+            isBooked = typeof mData === 'object' 
+              ? (mData.booked === true || Number(mData.revenue) > 0 || Boolean(mData.tenant))
+              : Number(mData) > 0;
+          }
+          if (isBooked) bookedMonths.push(m);
           else availMonths.push(m);
         }
 
