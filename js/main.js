@@ -310,14 +310,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Pills
     cell.querySelectorAll('.m-pill').forEach(pill => {
       const dm = parseInt(pill.getAttribute('data-m'), 10);
-      const rev = schedule[String(dm)] ? (typeof schedule[String(dm)] === 'object' ? schedule[String(dm)].revenue : schedule[String(dm)]) : 0;
-      const isBooked = Number(rev) > 0;
+      const mData = schedule[String(dm)];
+      const rev = mData ? (typeof mData === 'object' ? mData.revenue : mData) : 0;
+      const tenant = (mData && typeof mData === 'object' && mData.tenant) ? mData.tenant : '';
+      const isBooked = Number(rev) > 0 || Boolean(tenant);
       pill.className = 'm-pill ' + (isBooked ? 'm-pill-booked' : 'm-pill-avail');
       pill.textContent = isBooked ? `${dm}月🔒` : `${dm}月`;
       if (isAdmin) {
+        const tenantInfo = tenant ? ` (${tenant})` : '';
         pill.title = isBooked 
-          ? `${dm}月：💰 收益 $${Number(rev).toLocaleString()} (不開放預訂) - 點擊編輯` 
-          : `${dm}月：🟢 開放預訂 - 點擊輸入收益`;
+          ? `${dm}月：💰 收益 $${Number(rev).toLocaleString()}${tenantInfo} (不開放預訂) - 點擊編輯` 
+          : `${dm}月：🟢 開放預訂 - 點擊輸入收益與廠商`;
       } else {
         pill.title = isBooked ? `${dm}月：🔒 不開放預訂` : `${dm}月：🟢 開放預訂`;
       }
@@ -326,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Action button
     const btn = cell.querySelector('.btn-schedule-action');
     if (btn) {
-      btn.innerHTML = isAdmin ? '⚙️ 設定各月收益' : '📅 1~12月排程明細';
+      btn.innerHTML = isAdmin ? '⚙️ 設定各月收益與承租人' : '📅 1~12月排程明細';
     }
   };
 
@@ -366,15 +369,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const hintEl = document.getElementById('schedule-role-hint');
     const gridEl = document.getElementById('schedule-months-grid');
     const saveBtn = document.getElementById('schedule-modal-save');
+    const batchPanel = document.getElementById('schedule-batch-panel');
 
-    if (titleEl) titleEl.innerHTML = isAdmin ? '⚙️ 管理者設定：各月份收益與預訂排程' : '📅 2026 年度版位預訂與排程明細';
+    if (titleEl) titleEl.innerHTML = isAdmin ? '⚙️ 管理者設定：各月份收益、承租人與預訂排程' : '📅 2026 年度版位預訂與排程明細';
     if (storeInfoEl) storeInfoEl.textContent = `🏪 ${storeCode} ${storeName} · 版位 [${loc}] · ${adType}`;
     if (rentInfoEl) rentInfoEl.textContent = `基準月租金：${baseRental}`;
 
     if (hintEl) {
       if (isAdmin) {
         hintEl.className = 'schedule-role-hint hint-admin';
-        hintEl.innerHTML = '🛡️ <strong>管理者模式</strong>：您可在特定月份輸入收益金額。一旦輸入收益（金額 &gt; 0），普通權限用戶將看到該月份為「<strong>不開放預訂</strong>」（普通用戶無法看到收益金額）。若無收益請設為 0 或清空，即恢復為「開放預訂」。';
+        hintEl.innerHTML = '🛡️ <strong>管理者模式</strong>：您可在特定月份輸入收益金額與<strong>承租廠商</strong>（承租人與金額只有管理者可見，普通訪客絕對無法看到）。若有單一廠商承租 6 個月或全年，可利用下方<strong>「⚡ 快速連續月份承租設定」</strong>工具一鍵批量套用！';
       } else {
         hintEl.className = 'schedule-role-hint hint-user';
         hintEl.innerHTML = 'ℹ️ <strong>2026 年度各月份檔期開放狀況表</strong>。標示「🔒 不開放預訂」之月份代表已有檔期安排，標示「🟢 開放預訂」之月份歡迎安排預訂。';
@@ -385,15 +389,35 @@ document.addEventListener('DOMContentLoaded', () => {
       saveBtn.style.display = isAdmin ? 'inline-block' : 'none';
     }
 
+    if (batchPanel) {
+      batchPanel.style.display = isAdmin ? 'block' : 'none';
+      if (isAdmin) {
+        const batchTenantInput = document.getElementById('batch-tenant-input');
+        const batchRevInput = document.getElementById('batch-rev-input');
+        const batchStartSelect = document.getElementById('batch-start-month');
+        const batchEndSelect = document.getElementById('batch-end-month');
+        if (batchTenantInput) batchTenantInput.value = '';
+        if (batchRevInput) batchRevInput.value = numRental > 0 ? numRental : '';
+        if (batchStartSelect) batchStartSelect.value = '1';
+        if (batchEndSelect) batchEndSelect.value = '6';
+        batchPanel.querySelectorAll('.batch-preset-btn').forEach(b => b.classList.remove('active'));
+        const halfYearBtn = batchPanel.querySelector('.batch-preset-btn[data-start="1"][data-end="6"]');
+        if (halfYearBtn) halfYearBtn.classList.add('active');
+      }
+    }
+
     gridEl.innerHTML = '';
     const activeM = clickedMonth || getActiveFilterMonth();
 
     for (let m = 1; m <= 12; m++) {
-      const rev = schedule[String(m)] ? (typeof schedule[String(m)] === 'object' ? schedule[String(m)].revenue : schedule[String(m)]) : 0;
-      const isBooked = Number(rev) > 0;
+      const mData = schedule[String(m)];
+      const rev = mData ? (typeof mData === 'object' ? mData.revenue : mData) : 0;
+      const tenant = (mData && typeof mData === 'object' && mData.tenant) ? mData.tenant : '';
+      const isBooked = Number(rev) > 0 || Boolean(tenant);
 
       const card = document.createElement('div');
       card.className = `month-card ${isBooked ? 'is-booked' : 'is-available'} ${String(m) === String(activeM) ? 'month-highlight-2' : ''}`;
+      card.setAttribute('data-card-m', m);
 
       if (isAdmin) {
         card.innerHTML = `
@@ -406,6 +430,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="month-rev-input-row">
               <input type="number" class="month-rev-input" data-m="${m}" value="${rev > 0 ? rev : ''}" placeholder="0 (開放預訂)" min="0" step="1000">
             </div>
+            <label style="font-size:11px; font-weight:600; color:#475569; margin-top:2px;">承租廠商 / 客戶備註 (僅管理者可見)：</label>
+            <div class="month-tenant-row">
+              <input type="text" class="month-tenant-input" data-m="${m}" value="${tenant ? tenant.replace(/"/g, '&quot;') : ''}" placeholder="承租客戶/廠商名稱">
+            </div>
             <div class="month-quick-actions">
               <button type="button" class="btn-card-quick btn-fill-rent" data-m="${m}">帶入租金</button>
               <button type="button" class="btn-card-quick btn-clear" data-m="${m}">清除(開放)</button>
@@ -413,12 +441,14 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
 
-        const input = card.querySelector('.month-rev-input');
+        const revInput = card.querySelector('.month-rev-input');
+        const tenantInput = card.querySelector('.month-tenant-input');
         const pill = card.querySelector('.month-badge-pill');
 
-        input.addEventListener('input', () => {
-          const val = parseInt(input.value.replace(/[^0-9]/g, ''), 10) || 0;
-          if (val > 0) {
+        function updateCardStatus() {
+          const val = parseInt(revInput.value.replace(/[^0-9]/g, ''), 10) || 0;
+          const tVal = tenantInput.value.trim();
+          if (val > 0 || tVal) {
             pill.className = 'month-badge-pill pill-booked';
             pill.textContent = '🔒 不開放預訂';
             card.classList.remove('is-available');
@@ -429,26 +459,24 @@ document.addEventListener('DOMContentLoaded', () => {
             card.classList.remove('is-booked');
             card.classList.add('is-available');
           }
-        });
+        }
+
+        revInput.addEventListener('input', updateCardStatus);
+        tenantInput.addEventListener('input', updateCardStatus);
 
         card.querySelector('.btn-fill-rent').addEventListener('click', () => {
           if (numRental > 0) {
-            input.value = numRental;
-            pill.className = 'month-badge-pill pill-booked';
-            pill.textContent = '🔒 不開放預訂';
-            card.classList.remove('is-available');
-            card.classList.add('is-booked');
+            revInput.value = numRental;
+            updateCardStatus();
           } else {
             alert('此版位目前未設定基準月租金');
           }
         });
 
         card.querySelector('.btn-clear').addEventListener('click', () => {
-          input.value = '';
-          pill.className = 'month-badge-pill pill-avail';
-          pill.textContent = '🟢 開放預訂';
-          card.classList.remove('is-booked');
-          card.classList.add('is-available');
+          revInput.value = '';
+          tenantInput.value = '';
+          updateCardStatus();
         });
       } else {
         card.innerHTML = `
@@ -474,13 +502,21 @@ document.addEventListener('DOMContentLoaded', () => {
   window.saveMonthScheduleModal = function() {
     const modal = document.getElementById('schedule-modal');
     if (!activeScheduleCell || !modal) return;
-    const inputs = modal.querySelectorAll('.month-rev-input');
+    const cards = modal.querySelectorAll('.month-card');
     const newSchedule = {};
-    inputs.forEach(inp => {
-      const m = inp.dataset.m;
-      const val = parseInt(inp.value.replace(/[^0-9]/g, ''), 10);
-      if (!isNaN(val) && val > 0) {
-        newSchedule[m] = val;
+    cards.forEach(card => {
+      const revInput = card.querySelector('.month-rev-input');
+      const tenantInput = card.querySelector('.month-tenant-input');
+      if (!revInput) return;
+      const m = revInput.dataset.m;
+      const val = parseInt(revInput.value.replace(/[^0-9]/g, ''), 10) || 0;
+      const tenant = tenantInput ? tenantInput.value.trim() : '';
+
+      if (val > 0 || tenant) {
+        newSchedule[m] = {
+          revenue: val,
+          tenant: tenant
+        };
       }
     });
 
@@ -489,9 +525,109 @@ document.addEventListener('DOMContentLoaded', () => {
     window.closeMonthScheduleModal();
 
     if (window.triggerAutoSave) window.triggerAutoSave();
-    if (window.showToast) window.showToast('✅ 已成功儲存版位月份收益與預訂排程！', 'success');
+    if (window.showToast) window.showToast('✅ 已成功儲存各月收益、承租人與排程！', 'success');
     if (window.reindexFilterGroups) window.reindexFilterGroups();
   };
+
+  // Batch panel event bindings (One-time binding)
+  const batchPanelInit = document.getElementById('schedule-batch-panel');
+  if (batchPanelInit) {
+    batchPanelInit.querySelectorAll('.batch-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        batchPanelInit.querySelectorAll('.batch-preset-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const startM = btn.getAttribute('data-start');
+        const endM = btn.getAttribute('data-end');
+        const startSelect = document.getElementById('batch-start-month');
+        const endSelect = document.getElementById('batch-end-month');
+        if (startSelect) startSelect.value = startM;
+        if (endSelect) endSelect.value = endM;
+      });
+    });
+
+    const btnApply = document.getElementById('btn-batch-apply');
+    if (btnApply) {
+      btnApply.addEventListener('click', () => {
+        const startSelect = document.getElementById('batch-start-month');
+        const endSelect = document.getElementById('batch-end-month');
+        const startM = parseInt(startSelect ? startSelect.value : '1', 10);
+        const endM = parseInt(endSelect ? endSelect.value : '12', 10);
+        const minM = Math.min(startM, endM);
+        const maxM = Math.max(startM, endM);
+
+        const batchTenant = (document.getElementById('batch-tenant-input') ? document.getElementById('batch-tenant-input').value.trim() : '');
+        const batchRevRaw = (document.getElementById('batch-rev-input') ? document.getElementById('batch-rev-input').value : '');
+        const batchRev = parseInt(batchRevRaw.replace(/[^0-9]/g, ''), 10) || 0;
+
+        for (let m = minM; m <= maxM; m++) {
+          const card = document.querySelector(`.month-card[data-card-m="${m}"]`);
+          if (card) {
+            const revInput = card.querySelector('.month-rev-input');
+            const tenantInput = card.querySelector('.month-tenant-input');
+            const pill = card.querySelector('.month-badge-pill');
+
+            if (revInput) revInput.value = batchRev > 0 ? batchRev : '';
+            if (tenantInput) tenantInput.value = batchTenant;
+
+            if (batchRev > 0 || batchTenant) {
+              if (pill) {
+                pill.className = 'month-badge-pill pill-booked';
+                pill.textContent = '🔒 不開放預訂';
+              }
+              card.classList.remove('is-available');
+              card.classList.add('is-booked');
+            } else {
+              if (pill) {
+                pill.className = 'month-badge-pill pill-avail';
+                pill.textContent = '🟢 開放預訂';
+              }
+              card.classList.remove('is-booked');
+              card.classList.add('is-available');
+            }
+          }
+        }
+
+        const count = maxM - minM + 1;
+        if (window.showToast) {
+          window.showToast(`⚡ 已成功套用至 ${minM}~${maxM} 月 (共 ${count} 個月份)！請確認後點擊「💾 儲存收益設定」`, 'info');
+        }
+      });
+    }
+
+    const btnClear = document.getElementById('btn-batch-clear');
+    if (btnClear) {
+      btnClear.addEventListener('click', () => {
+        const startSelect = document.getElementById('batch-start-month');
+        const endSelect = document.getElementById('batch-end-month');
+        const startM = parseInt(startSelect ? startSelect.value : '1', 10);
+        const endM = parseInt(endSelect ? endSelect.value : '12', 10);
+        const minM = Math.min(startM, endM);
+        const maxM = Math.max(startM, endM);
+
+        for (let m = minM; m <= maxM; m++) {
+          const card = document.querySelector(`.month-card[data-card-m="${m}"]`);
+          if (card) {
+            const revInput = card.querySelector('.month-rev-input');
+            const tenantInput = card.querySelector('.month-tenant-input');
+            const pill = card.querySelector('.month-badge-pill');
+
+            if (revInput) revInput.value = '';
+            if (tenantInput) tenantInput.value = '';
+            if (pill) {
+              pill.className = 'month-badge-pill pill-avail';
+              pill.textContent = '🟢 開放預訂';
+            }
+            card.classList.remove('is-booked');
+            card.classList.add('is-available');
+          }
+        }
+
+        if (window.showToast) {
+          window.showToast(`🔄 已清空 ${minM}~${maxM} 月並恢復為開放預訂`, 'warning');
+        }
+      });
+    }
+  }
 
   if (scheduleModalSave) {
     scheduleModalSave.addEventListener('click', window.saveMonthScheduleModal);
