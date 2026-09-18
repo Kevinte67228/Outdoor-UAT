@@ -1585,6 +1585,37 @@ body.admin-mode .btn-schedule-action:hover {
   border-left: 4px solid #10b981;
 }
 
+/* Visitor Mode Clean Card (No redundant body, only month & booking status) */
+.visitor-month-card {
+  padding: 12px 14px;
+  gap: 0;
+  justify-content: center;
+  min-height: 48px;
+}
+
+.visitor-month-card.is-available {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-left: 4px solid #10b981;
+}
+
+.visitor-month-card.is-booked {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #ef4444;
+}
+
+.visitor-month-card .month-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.visitor-month-card .month-badge-pill {
+  font-size: 12px;
+  padding: 3px 10px;
+}
+
 .month-card-header {
   display: flex;
   justify-content: space-between;
