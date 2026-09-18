@@ -326,10 +326,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Action button
+    // Action button (Only visible in admin mode)
     const btn = cell.querySelector('.btn-schedule-action');
     if (btn) {
-      btn.innerHTML = isAdmin ? '⚙️ 設定各月收益與承租人' : '📅 1~12月排程明細';
+      btn.style.display = isAdmin ? 'block' : 'none';
+      if (isAdmin) {
+        btn.innerHTML = '⚙️ 設定各月收益與承租人';
+      }
     }
   };
 
