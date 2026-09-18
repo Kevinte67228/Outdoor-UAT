@@ -587,8 +587,7 @@
             '<div class="year-grid-row">' +
               [7,8,9,10,11,12].map(m => '<span class="m-pill m-pill-avail" data-m="' + m + '" onclick="window.openMonthScheduleModal(this, ' + m + ')" title="' + m + '月：🟢 開放預訂">' + m + '月</span>').join('') +
             '</div>' +
-          '</div>' +
-          '<button type="button" class="btn-schedule-action" onclick="window.openMonthScheduleModal(this)" title="管理各月份預訂排程">' + (isAdmin ? '⚙️ 設定各月收益' : '📅 1~12月排程明細') + '</button>' +
+          '<button type="button" class="btn-schedule-action" style="display: ' + (isAdmin ? 'block' : 'none') + ';" onclick="window.openMonthScheduleModal(this)" title="管理各月份預訂排程">' + (isAdmin ? '⚙️ 設定各月收益與承租人' : '') + '</button>' +
         '</div>' +
       '</td>' +
       '<td class="photo-cell" data-col="current" data-loc="' + nextLoc + '" data-store="' + (firstRow.dataset.store || '') + '" data-adtype="' + (firstRow.dataset.type || '') + '">' +
@@ -1405,7 +1404,7 @@
         });
 
         const btn = cell.querySelector('.btn-schedule-action');
-        if (btn) btn.innerHTML = '📅 1~12月排程明細';
+        if (btn) btn.style.display = 'none';
       });
 
       // Ensure rotated style and data attributes are firmly intact on all images
