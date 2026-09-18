@@ -1633,6 +1633,70 @@ body.admin-mode .btn-schedule-action:hover {
   gap: 6px;
 }
 
+/* Status Toggle Button Group (Admin) */
+.status-toggle-group {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.status-toggle-btn {
+  flex: 1;
+  padding: 5px 0;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.status-toggle-btn:hover {
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+}
+
+.status-toggle-btn.active-avail {
+  background: #dcfce7 !important;
+  border-color: #86efac !important;
+  color: #15803d !important;
+  box-shadow: 0 1px 3px rgba(34, 197, 94, 0.2);
+}
+
+.status-toggle-btn.active-booked {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #b91c1c !important;
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.2);
+}
+
+/* Modal header admin switch button */
+.btn-modal-switch-admin {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-left: auto;
+  margin-right: 12px;
+}
+
+.btn-modal-switch-admin:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+body.admin-mode .btn-modal-switch-admin {
+  display: none !important;
+}
+
 .month-rev-input-row {
   display: flex;
   align-items: center;
