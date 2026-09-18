@@ -1369,42 +1369,18 @@
           availText = '🟢 可預訂：' + ranges.join(', ');
         }
 
-        let bookedText = '';
-        if (bookedMonths.length > 0) {
-          bookedText = '🔒 不開放：' + bookedMonths.map(m => m + '月').join(', ');
-        }
-
-        const availEl = cell.querySelector('.summary-avail-text');
-        if (availEl) availEl.textContent = availText;
-
-        let bookedEl = cell.querySelector('.summary-booked-text');
-        if (bookedMonths.length > 0) {
-          if (!bookedEl) {
-            const summaryHeader = cell.querySelector('.schedule-summary-header');
-            if (summaryHeader) {
-              bookedEl = document.createElement('div');
-              bookedEl.className = 'summary-booked-text';
-              summaryHeader.appendChild(bookedEl);
-            }
-          }
-          if (bookedEl) {
-            bookedEl.textContent = bookedText;
-            bookedEl.style.display = '';
-          }
-        } else if (bookedEl) {
-          bookedEl.style.display = 'none';
-        }
+        const sumHeader = cell.querySelector('.schedule-summary-header');
+        if (sumHeader) sumHeader.remove();
+        const btn = cell.querySelector('.btn-schedule-action');
+        if (btn) btn.remove();
 
         cell.querySelectorAll('.m-pill').forEach(pill => {
           const dm = parseInt(pill.getAttribute('data-m'), 10);
           const isBooked = bookedMonths.includes(dm);
           pill.className = 'm-pill ' + (isBooked ? 'm-pill-booked' : 'm-pill-avail');
-          pill.textContent = isBooked ? `${dm}月🔒` : `${dm}月`;
+          pill.innerHTML = isBooked ? `${dm}月<span class="m-lock">🔒</span>` : `${dm}月`;
           pill.title = isBooked ? `${dm}月：🔒 不開放預訂` : `${dm}月：🟢 開放預訂`;
         });
-
-        const btn = cell.querySelector('.btn-schedule-action');
-        if (btn) btn.style.display = 'none';
       });
 
       // Ensure rotated style and data attributes are firmly intact on all images
