@@ -374,6 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hintEl = document.getElementById('schedule-role-hint');
     const gridEl = document.getElementById('schedule-months-grid');
     const saveBtn = document.getElementById('schedule-modal-save');
+    const saveBtnTop = document.getElementById('schedule-modal-save-top');
     const batchPanel = document.getElementById('schedule-batch-panel');
     const adminSwitchBtn = document.getElementById('btn-modal-switch-admin');
 
@@ -401,6 +402,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saveBtn) {
       saveBtn.style.display = isAdmin ? 'inline-block' : 'none';
       saveBtn.textContent = '💾 儲存預訂與收益設定';
+    }
+    if (saveBtnTop) {
+      saveBtnTop.style.display = isAdmin ? 'inline-flex' : 'none';
     }
 
     if (batchPanel) {
@@ -648,6 +652,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const minM = Math.min(startM, endM);
         const maxM = Math.max(startM, endM);
         applyBatchToRange(minM, maxM, false);
+      });
+    }
+
+    const btnApplyAndSave = document.getElementById('btn-batch-apply-and-save');
+    if (btnApplyAndSave) {
+      btnApplyAndSave.addEventListener('click', () => {
+        const startSelect = document.getElementById('batch-start-month');
+        const endSelect = document.getElementById('batch-end-month');
+        const startM = parseInt(startSelect ? startSelect.value : '1', 10);
+        const endM = parseInt(endSelect ? endSelect.value : '12', 10);
+        const minM = Math.min(startM, endM);
+        const maxM = Math.max(startM, endM);
+        applyBatchToRange(minM, maxM, false);
+        window.saveMonthScheduleModal();
       });
     }
 
