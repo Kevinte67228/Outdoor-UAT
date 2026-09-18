@@ -203,6 +203,9 @@
     }, 3200);
   }
 
+  window.triggerAutoSave = triggerAutoSave;
+  window.showToast = showToast;
+
   // ===== Apply Rotation Styling =====
   function applyRotationToImg(img, deg) {
     deg = (deg % 360 + 360) % 360;
@@ -572,6 +575,15 @@
       '<td class="dimension editable-cell">—</td>' +
       '<td class="dimension editable-cell">—</td>' +
       '<td class="rental editable-cell">—</td>' +
+      '<td class="month-schedule-cell" data-schedule="{}" data-store="' + (firstRow.dataset.store || '') + '" data-loc="' + nextLoc + '">' +
+        '<div class="schedule-cell-wrapper">' +
+          '<span class="schedule-status-tag status-avail" data-target-m="2" title="點擊檢視各月份預訂排程">2月 🟢 開放預訂</span>' +
+          '<div class="month-matrix">' +
+            Array.from({length: 12}, (_, idx) => '<span class="m-dot m-avail" data-m="' + (idx+1) + '" title="' + (idx+1) + '月：🟢 開放預訂">' + (idx+1) + '</span>').join('') +
+          '</div>' +
+          '<button type="button" class="btn-schedule-action" title="檢視各月份預訂明細">' + (isAdmin ? '⚙️ 設定收益' : '📅 1~12月排程') + '</button>' +
+        '</div>' +
+      '</td>' +
       '<td class="photo-cell" data-col="current" data-loc="' + nextLoc + '" data-store="' + (firstRow.dataset.store || '') + '" data-adtype="' + (firstRow.dataset.type || '') + '">' +
         '<span class="no-data">—</span>' +
       '</td>';
@@ -790,8 +802,8 @@
     try {
       const savedHtml = await getTableSnapshotFromDB();
       if (savedHtml && savedHtml.trim().length > 100) {
-        if (!savedHtml.includes('store-notes')) {
-          console.log('[Outdoor Admin] 檢測到表格欄位結構升級 (新增備註欄位)，自動同步為最新配置');
+        if (!savedHtml.includes('month-schedule-cell') || !savedHtml.includes('store-notes')) {
+          console.log('[Outdoor Admin] 檢測到表格欄位結構升級 (新增月份預訂欄位)，自動同步為最新配置');
           return;
         }
         const tbody = document.querySelector('#main-table tbody');
@@ -936,6 +948,10 @@
       }
     });
 
+    if (window.refreshAllScheduleCells) {
+      window.refreshAllScheduleCells();
+    }
+
     if (showNotice) {
       showToast(
         IS_UAT
@@ -969,6 +985,10 @@
       const s = cell.querySelector('.bb-text');
       if (s) s.removeAttribute('contenteditable');
     });
+
+    if (window.refreshAllScheduleCells) {
+      window.refreshAllScheduleCells();
+    }
 
     showToast('已登出管理者模式', 'info');
   }
@@ -1288,6 +1308,36 @@
       if (tFilter) tFilter.value = '';
       const nFilter = cloneDoc.querySelector('#new-filter');
       if (nFilter) nFilter.value = '';
+      const mFilter = cloneDoc.querySelector('#month-filter');
+      if (mFilter) mFilter.value = '2';
+      const bFilter = cloneDoc.querySelector('#booking-filter');
+      if (bFilter) bFilter.value = '';
+
+      const cloneSchedModal = cloneDoc.querySelector('#schedule-modal');
+      if (cloneSchedModal) cloneSchedModal.style.display = 'none';
+
+      // Ensure all schedule cells in published clean HTML are in visitor mode (no amounts displayed)
+      cloneDoc.querySelectorAll('.month-schedule-cell').forEach(cell => {
+        let sched = {};
+        try { sched = JSON.parse(cell.dataset.schedule || '{}'); } catch(e) {}
+        const rev2 = sched['2'] ? (typeof sched['2'] === 'object' ? sched['2'].revenue : sched['2']) : 0;
+        const isB2 = Number(rev2) > 0;
+        const tag = cell.querySelector('.schedule-status-tag');
+        if (tag) {
+          tag.className = 'schedule-status-tag ' + (isB2 ? 'status-booked' : 'status-avail');
+          tag.innerHTML = isB2 ? '2月 🔒 不開放預訂' : '2月 🟢 開放預訂';
+          tag.title = isB2 ? '2月份不開放預訂' : '2月份開放預訂';
+        }
+        cell.querySelectorAll('.m-dot').forEach(dot => {
+          const dm = dot.getAttribute('data-m');
+          const dRev = sched[dm] ? (typeof sched[dm] === 'object' ? sched[dm].revenue : sched[dm]) : 0;
+          const dBooked = Number(dRev) > 0;
+          dot.className = 'm-dot ' + (dBooked ? 'm-booked' : 'm-avail') + (dm === '2' ? ' m-active' : '');
+          dot.title = dBooked ? `${dm}月：🔒 不開放預訂` : `${dm}月：🟢 開放預訂`;
+        });
+        const btn = cell.querySelector('.btn-schedule-action');
+        if (btn) btn.innerHTML = '📅 1~12月排程';
+      });
 
       // Ensure rotated style and data attributes are firmly intact on all images
       cloneDoc.querySelectorAll('.photo-item img').forEach(img => {
