@@ -1319,67 +1319,37 @@ tr.hidden-row { display: none !important; }
 .schedule-cell-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  justify-content: center;
   width: 100%;
 }
 
-/* Clear Summary Header on top of the cell */
+/* Schedule Summary Header - Hidden as requested, only retaining the 12-month pill grid */
 .schedule-summary-header {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  width: 100%;
+  display: none !important;
 }
 
-.summary-avail-text {
-  font-size: 11px;
-  font-weight: 700;
-  color: #047857;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  padding: 3px 8px;
-  border-radius: 6px;
-  line-height: 1.3;
-  word-break: break-word;
-}
-
-.summary-booked-text {
-  font-size: 11px;
-  font-weight: 700;
-  color: #b91c1c;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  padding: 3px 8px;
-  border-radius: 6px;
-  line-height: 1.3;
-  word-break: break-word;
-}
-
-body.admin-mode .summary-booked-text {
-  color: #0369a1;
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-}
-
-/* 12-Month Grid: 2 rows of 6 */
+/* 12-Month Grid: Exactly matching user's cropped layout */
 .schedule-year-grid {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   width: 100%;
 }
 
 .year-grid-row {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 3px;
+  gap: 4px;
 }
 
 .m-pill {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 4px 1px;
+  min-height: 32px;
   font-size: 11px;
   font-weight: 600;
   border-radius: 4px;
@@ -1387,11 +1357,18 @@ body.admin-mode .summary-booked-text {
   transition: all 0.15s ease;
   user-select: none;
   text-align: center;
+  line-height: 1.2;
+}
+
+.m-pill .m-lock {
+  font-size: 10px;
+  line-height: 1;
+  margin-top: 1px;
 }
 
 .m-pill.m-pill-avail {
   background: #f0fdf4;
-  color: #15803d;
+  color: #047857;
   border: 1px solid #bbf7d0;
 }
 
@@ -1404,10 +1381,10 @@ body.admin-mode .summary-booked-text {
 }
 
 .m-pill.m-pill-booked {
-  background: #fee2e2;
+  background: #fef2f2;
   color: #b91c1c;
   font-weight: 700;
-  border: 1px solid #fca5a5;
+  border: 1px solid #fecaca;
 }
 
 .m-pill.m-pill-booked:hover {
