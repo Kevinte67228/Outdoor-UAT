@@ -203,23 +203,44 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ===== Month Schedule Modal & Interactive Handlers =====
+  // ===== Month Schedule Helpers & Globals =====
+  window.formatMonthRanges = function(months) {
+    if (!months || months.length === 0) return '';
+    const sorted = [...months].map(Number).sort((a, b) => a - b);
+    const ranges = [];
+    let start = sorted[0];
+    let prev = start;
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i] === prev + 1) {
+        prev = sorted[i];
+      } else {
+        ranges.push(start === prev ? `${start}月` : `${start}~${prev}月`);
+        start = sorted[i];
+        prev = start;
+      }
+    }
+    ranges.push(start === prev ? `${start}月` : `${start}~${prev}月`);
+    return ranges.join(', ');
+  };
+
   const scheduleModal = document.getElementById('schedule-modal');
   const scheduleModalClose = document.getElementById('schedule-modal-close');
   const scheduleModalCancel = document.getElementById('schedule-modal-cancel');
   const scheduleModalSave = document.getElementById('schedule-modal-save');
   let activeScheduleCell = null;
 
-  function closeScheduleModal() {
-    if (scheduleModal) scheduleModal.style.display = 'none';
+  window.closeMonthScheduleModal = function() {
+    const modal = document.getElementById('schedule-modal');
+    if (modal) modal.style.display = 'none';
     activeScheduleCell = null;
-  }
+  };
+  window.closeScheduleModal = window.closeMonthScheduleModal;
 
-  if (scheduleModalClose) scheduleModalClose.addEventListener('click', closeScheduleModal);
-  if (scheduleModalCancel) scheduleModalCancel.addEventListener('click', closeScheduleModal);
+  if (scheduleModalClose) scheduleModalClose.addEventListener('click', window.closeMonthScheduleModal);
+  if (scheduleModalCancel) scheduleModalCancel.addEventListener('click', window.closeMonthScheduleModal);
   if (scheduleModal) {
     scheduleModal.addEventListener('click', (e) => {
-      if (e.target === scheduleModal) closeScheduleModal();
+      if (e.target === scheduleModal) window.closeMonthScheduleModal();
     });
   }
 
@@ -236,56 +257,76 @@ document.addEventListener('DOMContentLoaded', () => {
     schedule = schedule || {};
     cell.dataset.schedule = JSON.stringify(schedule);
 
-    const m = targetMonth || getActiveFilterMonth();
-    const rev = schedule[m] ? (typeof schedule[m] === 'object' ? schedule[m].revenue : schedule[m]) : 0;
-    const isBooked = Number(rev) > 0;
     const isAdmin = document.body.classList.contains('admin-mode');
-
-    const tag = cell.querySelector('.schedule-status-tag');
-    if (tag) {
-      tag.setAttribute('data-target-m', m);
-      if (isAdmin) {
-        if (isBooked) {
-          tag.className = 'schedule-status-tag status-booked admin-rev';
-          tag.innerHTML = `${m}月 💰$${Number(rev).toLocaleString()} <span class="tag-sub">(不開放)</span>`;
-          tag.title = `${m}月份已有收益 $${Number(rev).toLocaleString()}，普通用戶看到為「不開放預訂」 (點擊編輯)`;
-        } else {
-          tag.className = 'schedule-status-tag status-avail';
-          tag.innerHTML = `${m}月 🟢 開放預訂`;
-          tag.title = `${m}月份開放預訂 (點擊輸入收益)`;
-        }
+    const availMonths = [];
+    const bookedMonths = [];
+    for (let m = 1; m <= 12; m++) {
+      const rev = schedule[String(m)] ? (typeof schedule[String(m)] === 'object' ? schedule[String(m)].revenue : schedule[String(m)]) : 0;
+      if (Number(rev) > 0) {
+        bookedMonths.push(m);
       } else {
-        if (isBooked) {
-          tag.className = 'schedule-status-tag status-booked';
-          tag.innerHTML = `${m}月 🔒 不開放預訂`;
-          tag.title = `${m}月份不開放預訂 (點擊檢視明細)`;
-        } else {
-          tag.className = 'schedule-status-tag status-avail';
-          tag.innerHTML = `${m}月 🟢 開放預訂`;
-          tag.title = `${m}月份開放預訂 (點擊檢視明細)`;
-        }
+        availMonths.push(m);
       }
     }
 
-    cell.querySelectorAll('.m-dot').forEach(dot => {
-      const dm = dot.getAttribute('data-m');
-      const dRev = schedule[dm] ? (typeof schedule[dm] === 'object' ? schedule[dm].revenue : schedule[dm]) : 0;
-      const dBooked = Number(dRev) > 0;
-      dot.className = 'm-dot ' + (dBooked ? 'm-booked' : 'm-avail') + (dm === m ? ' m-active' : '');
+    // Summary texts
+    let availText = '';
+    if (availMonths.length === 12) {
+      availText = '🟢 全年 1~12月 皆可預訂';
+    } else if (availMonths.length === 0) {
+      availText = '🔴 全年檔期額滿';
+    } else {
+      availText = '🟢 可預訂：' + window.formatMonthRanges(availMonths);
+    }
+
+    let bookedText = '';
+    if (bookedMonths.length > 0) {
+      bookedText = '🔒 不開放：' + bookedMonths.map(m => m + '月').join(', ');
+    }
+
+    const availEl = cell.querySelector('.summary-avail-text');
+    if (availEl) {
+      availEl.textContent = availText;
+    }
+
+    let bookedEl = cell.querySelector('.summary-booked-text');
+    if (bookedMonths.length > 0) {
+      if (!bookedEl) {
+        const header = cell.querySelector('.schedule-summary-header');
+        if (header) {
+          bookedEl = document.createElement('div');
+          bookedEl.className = 'summary-booked-text';
+          header.appendChild(bookedEl);
+        }
+      }
+      if (bookedEl) {
+        bookedEl.textContent = bookedText;
+        bookedEl.style.display = '';
+      }
+    } else if (bookedEl) {
+      bookedEl.style.display = 'none';
+    }
+
+    // Pills
+    cell.querySelectorAll('.m-pill').forEach(pill => {
+      const dm = parseInt(pill.getAttribute('data-m'), 10);
+      const rev = schedule[String(dm)] ? (typeof schedule[String(dm)] === 'object' ? schedule[String(dm)].revenue : schedule[String(dm)]) : 0;
+      const isBooked = Number(rev) > 0;
+      pill.className = 'm-pill ' + (isBooked ? 'm-pill-booked' : 'm-pill-avail');
+      pill.textContent = isBooked ? `${dm}月🔒` : `${dm}月`;
       if (isAdmin) {
-        dot.title = dBooked 
-          ? `${dm}月：💰 收益 $${Number(dRev).toLocaleString()} (不開放預訂) - 點擊編輯`
+        pill.title = isBooked 
+          ? `${dm}月：💰 收益 $${Number(rev).toLocaleString()} (不開放預訂) - 點擊編輯` 
           : `${dm}月：🟢 開放預訂 - 點擊輸入收益`;
       } else {
-        dot.title = dBooked 
-          ? `${dm}月：🔒 不開放預訂`
-          : `${dm}月：🟢 開放預訂`;
+        pill.title = isBooked ? `${dm}月：🔒 不開放預訂` : `${dm}月：🟢 開放預訂`;
       }
     });
 
+    // Action button
     const btn = cell.querySelector('.btn-schedule-action');
     if (btn) {
-      btn.innerHTML = isAdmin ? '⚙️ 設定收益' : '📅 1~12月排程';
+      btn.innerHTML = isAdmin ? '⚙️ 設定各月收益' : '📅 1~12月排程明細';
     }
   };
 
@@ -298,17 +339,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  window.openScheduleModal = function(cell, clickedMonth) {
-    if (!scheduleModal || !cell) return;
+  window.openMonthScheduleModal = function(el, clickedMonth) {
+    const modal = document.getElementById('schedule-modal');
+    if (!modal || !el) return;
+    const cell = el.classList && el.classList.contains('month-schedule-cell') ? el : el.closest('.month-schedule-cell');
+    if (!cell) return;
+
     activeScheduleCell = cell;
     const row = cell.closest('tr');
     const isAdmin = document.body.classList.contains('admin-mode');
 
-    const storeCode = row.dataset.store || (row.querySelector('.store-code') ? row.querySelector('.store-code').innerText.trim() : '');
-    const storeName = row.dataset.name || (row.querySelector('.store-name') ? row.querySelector('.store-name').innerText.trim() : '');
-    const loc = (row.querySelector('.bb-text') ? row.querySelector('.bb-text').innerText.trim() : '') || cell.dataset.loc || 'A';
-    const adType = row.dataset.type || (row.querySelector('.ad-type') ? row.querySelector('.ad-type').innerText.trim() : '');
-    const rentalCell = row.querySelector('.rental');
+    const storeCode = (row && (row.dataset.store || (row.querySelector('.store-code') ? row.querySelector('.store-code').innerText.trim() : ''))) || cell.dataset.store || '';
+    const storeName = (row && (row.dataset.name || (row.querySelector('.store-name') ? row.querySelector('.store-name').innerText.trim() : ''))) || '';
+    const loc = (row && row.querySelector('.bb-text') ? row.querySelector('.bb-text').innerText.trim() : '') || cell.dataset.loc || 'A';
+    const adType = (row && (row.dataset.type || (row.querySelector('.ad-type') ? row.querySelector('.ad-type').innerText.trim() : ''))) || '';
+    const rentalCell = row ? row.querySelector('.rental') : null;
     const baseRental = rentalCell ? rentalCell.innerText.trim() : '—';
     const numRental = parseInt(baseRental.replace(/[^0-9]/g, ''), 10) || 0;
 
@@ -320,6 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const rentInfoEl = document.getElementById('schedule-modal-rent-info');
     const hintEl = document.getElementById('schedule-role-hint');
     const gridEl = document.getElementById('schedule-months-grid');
+    const saveBtn = document.getElementById('schedule-modal-save');
 
     if (titleEl) titleEl.innerHTML = isAdmin ? '⚙️ 管理者設定：各月份收益與預訂排程' : '📅 2026 年度版位預訂與排程明細';
     if (storeInfoEl) storeInfoEl.textContent = `🏪 ${storeCode} ${storeName} · 版位 [${loc}] · ${adType}`;
@@ -331,12 +377,12 @@ document.addEventListener('DOMContentLoaded', () => {
         hintEl.innerHTML = '🛡️ <strong>管理者模式</strong>：您可在特定月份輸入收益金額。一旦輸入收益（金額 &gt; 0），普通權限用戶將看到該月份為「<strong>不開放預訂</strong>」（普通用戶無法看到收益金額）。若無收益請設為 0 或清空，即恢復為「開放預訂」。';
       } else {
         hintEl.className = 'schedule-role-hint hint-user';
-        hintEl.innerHTML = 'ℹ️ <strong>2026 年度各月份檔期開放狀況表</strong>。標示「不開放預訂」之月份代表已有檔期安排，歡迎預訂其他開放月份。';
+        hintEl.innerHTML = 'ℹ️ <strong>2026 年度各月份檔期開放狀況表</strong>。標示「🔒 不開放預訂」之月份代表已有檔期安排，標示「🟢 開放預訂」之月份歡迎安排預訂。';
       }
     }
 
-    if (scheduleModalSave) {
-      scheduleModalSave.style.display = isAdmin ? 'inline-block' : 'none';
+    if (saveBtn) {
+      saveBtn.style.display = isAdmin ? 'inline-block' : 'none';
     }
 
     gridEl.innerHTML = '';
@@ -421,51 +467,53 @@ document.addEventListener('DOMContentLoaded', () => {
       gridEl.appendChild(card);
     }
 
-    scheduleModal.style.display = 'flex';
+    modal.style.display = 'flex';
+  };
+  window.openScheduleModal = window.openMonthScheduleModal;
+
+  window.saveMonthScheduleModal = function() {
+    const modal = document.getElementById('schedule-modal');
+    if (!activeScheduleCell || !modal) return;
+    const inputs = modal.querySelectorAll('.month-rev-input');
+    const newSchedule = {};
+    inputs.forEach(inp => {
+      const m = inp.dataset.m;
+      const val = parseInt(inp.value.replace(/[^0-9]/g, ''), 10);
+      if (!isNaN(val) && val > 0) {
+        newSchedule[m] = val;
+      }
+    });
+
+    activeScheduleCell.dataset.schedule = JSON.stringify(newSchedule);
+    window.updateScheduleCellUI(activeScheduleCell, newSchedule);
+    window.closeMonthScheduleModal();
+
+    if (window.triggerAutoSave) window.triggerAutoSave();
+    if (window.showToast) window.showToast('✅ 已成功儲存版位月份收益與預訂排程！', 'success');
+    if (window.reindexFilterGroups) window.reindexFilterGroups();
   };
 
   if (scheduleModalSave) {
-    scheduleModalSave.addEventListener('click', () => {
-      if (!activeScheduleCell) return;
-      const inputs = scheduleModal.querySelectorAll('.month-rev-input');
-      const newSchedule = {};
-      inputs.forEach(inp => {
-        const m = inp.dataset.m;
-        const val = parseInt(inp.value.replace(/[^0-9]/g, ''), 10);
-        if (!isNaN(val) && val > 0) {
-          newSchedule[m] = val;
-        }
-      });
-
-      activeScheduleCell.dataset.schedule = JSON.stringify(newSchedule);
-      window.updateScheduleCellUI(activeScheduleCell, newSchedule, getActiveFilterMonth());
-      closeScheduleModal();
-
-      if (window.triggerAutoSave) window.triggerAutoSave();
-      if (window.showToast) window.showToast('✅ 已成功儲存版位月份收益與預訂排程！', 'success');
-      if (window.reindexFilterGroups) window.reindexFilterGroups();
-    });
+    scheduleModalSave.addEventListener('click', window.saveMonthScheduleModal);
   }
 
   table.addEventListener('click', (e) => {
     const cell = e.target.closest('.month-schedule-cell');
     if (!cell) return;
 
-    const dot = e.target.closest('.m-dot');
-    const tag = e.target.closest('.schedule-status-tag');
+    const pill = e.target.closest('.m-pill');
     const btn = e.target.closest('.btn-schedule-action');
 
-    if (dot) {
+    if (pill) {
       e.stopPropagation();
-      const clickedM = dot.getAttribute('data-m');
-      window.openScheduleModal(cell, clickedM);
+      const clickedM = pill.getAttribute('data-m');
+      window.openMonthScheduleModal(cell, clickedM);
       return;
     }
 
-    if (tag || btn) {
+    if (btn) {
       e.stopPropagation();
-      const targetM = tag ? tag.getAttribute('data-target-m') : getActiveFilterMonth();
-      window.openScheduleModal(cell, targetM);
+      window.openMonthScheduleModal(cell);
       return;
     }
   });
