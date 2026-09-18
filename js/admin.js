@@ -1323,15 +1323,26 @@
       const cloneSchedModal = cloneDoc.querySelector('#schedule-modal');
       if (cloneSchedModal) cloneSchedModal.style.display = 'none';
 
-      // Ensure all schedule cells in published clean HTML are in visitor mode (no amounts displayed, full year-round summary & pills)
+      const cloneBatchPanel = cloneDoc.querySelector('#schedule-batch-panel');
+      if (cloneBatchPanel) {
+        cloneBatchPanel.style.display = 'none';
+        const ti = cloneBatchPanel.querySelector('#batch-tenant-input');
+        if (ti) ti.value = '';
+        const ri = cloneBatchPanel.querySelector('#batch-rev-input');
+        if (ri) ri.value = '';
+      }
+
+      // Ensure all schedule cells in published clean HTML are in visitor mode (no amounts or tenant names displayed, full year-round summary & pills)
       cloneDoc.querySelectorAll('.month-schedule-cell').forEach(cell => {
         let sched = {};
         try { sched = JSON.parse(cell.dataset.schedule || '{}'); } catch(e) {}
         const availMonths = [];
         const bookedMonths = [];
         for (let m = 1; m <= 12; m++) {
-          const rev = sched[String(m)] ? (typeof sched[String(m)] === 'object' ? sched[String(m)].revenue : sched[String(m)]) : 0;
-          if (Number(rev) > 0) bookedMonths.push(m);
+          const mData = sched[String(m)];
+          const rev = mData ? (typeof mData === 'object' ? mData.revenue : mData) : 0;
+          const tenant = (mData && typeof mData === 'object' && mData.tenant) ? mData.tenant : '';
+          if (Number(rev) > 0 || Boolean(tenant)) bookedMonths.push(m);
           else availMonths.push(m);
         }
 
