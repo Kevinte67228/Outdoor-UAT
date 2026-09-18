@@ -258,64 +258,24 @@ document.addEventListener('DOMContentLoaded', () => {
     cell.dataset.schedule = JSON.stringify(schedule);
 
     const isAdmin = document.body.classList.contains('admin-mode');
-    const availMonths = [];
-    const bookedMonths = [];
-    for (let m = 1; m <= 12; m++) {
-      const rev = schedule[String(m)] ? (typeof schedule[String(m)] === 'object' ? schedule[String(m)].revenue : schedule[String(m)]) : 0;
-      if (Number(rev) > 0) {
-        bookedMonths.push(m);
-      } else {
-        availMonths.push(m);
-      }
-    }
 
-    // Summary texts
-    let availText = '';
-    if (availMonths.length === 12) {
-      availText = '🟢 全年 1~12月 皆可預訂';
-    } else if (availMonths.length === 0) {
-      availText = '🔴 全年檔期額滿';
-    } else {
-      availText = '🟢 可預訂：' + window.formatMonthRanges(availMonths);
-    }
+    // Clean up summary header and action button if present
+    const sumHeader = cell.querySelector('.schedule-summary-header');
+    if (sumHeader) sumHeader.remove();
+    const actionBtn = cell.querySelector('.btn-schedule-action');
+    if (actionBtn) actionBtn.remove();
 
-    let bookedText = '';
-    if (bookedMonths.length > 0) {
-      bookedText = '🔒 不開放：' + bookedMonths.map(m => m + '月').join(', ');
-    }
-
-    const availEl = cell.querySelector('.summary-avail-text');
-    if (availEl) {
-      availEl.textContent = availText;
-    }
-
-    let bookedEl = cell.querySelector('.summary-booked-text');
-    if (bookedMonths.length > 0) {
-      if (!bookedEl) {
-        const header = cell.querySelector('.schedule-summary-header');
-        if (header) {
-          bookedEl = document.createElement('div');
-          bookedEl.className = 'summary-booked-text';
-          header.appendChild(bookedEl);
-        }
-      }
-      if (bookedEl) {
-        bookedEl.textContent = bookedText;
-        bookedEl.style.display = '';
-      }
-    } else if (bookedEl) {
-      bookedEl.style.display = 'none';
-    }
-
-    // Pills
+    // Pills (Retain exactly this 12-month block)
     cell.querySelectorAll('.m-pill').forEach(pill => {
       const dm = parseInt(pill.getAttribute('data-m'), 10);
       const mData = schedule[String(dm)];
       const rev = mData ? (typeof mData === 'object' ? mData.revenue : mData) : 0;
       const tenant = (mData && typeof mData === 'object' && mData.tenant) ? mData.tenant : '';
       const isBooked = Number(rev) > 0 || Boolean(tenant);
+
       pill.className = 'm-pill ' + (isBooked ? 'm-pill-booked' : 'm-pill-avail');
-      pill.textContent = isBooked ? `${dm}月🔒` : `${dm}月`;
+      pill.innerHTML = isBooked ? `${dm}月<span class="m-lock">🔒</span>` : `${dm}月`;
+
       if (isAdmin) {
         const tenantInfo = tenant ? ` (${tenant})` : '';
         pill.title = isBooked 
@@ -325,15 +285,6 @@ document.addEventListener('DOMContentLoaded', () => {
         pill.title = isBooked ? `${dm}月：🔒 不開放預訂` : `${dm}月：🟢 開放預訂`;
       }
     });
-
-    // Action button (Only visible in admin mode)
-    const btn = cell.querySelector('.btn-schedule-action');
-    if (btn) {
-      btn.style.display = isAdmin ? 'block' : 'none';
-      if (isAdmin) {
-        btn.innerHTML = '⚙️ 設定各月收益與承租人';
-      }
-    }
   };
 
   window.refreshAllScheduleCells = function() {
